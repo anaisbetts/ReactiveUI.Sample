@@ -12,6 +12,7 @@ using Ninject.MockingKernel;
 using Ninject.MockingKernel.Moq;
 using ReactiveUI.Routing;
 using ReactiveUI.Testing;
+using ReactiveUI.Xaml;
 using Xunit;
 
 namespace ReactiveUI.Sample.ViewModels.Tests
@@ -84,12 +85,14 @@ namespace ReactiveUI.Sample.ViewModels.Tests
 
             fixture.Confirm.CanExecute(null).Should().BeTrue();
 
-            string result = null;
-            fixture.ObservableForProperty(x => x.ErrorMessage).Subscribe(x => result = x.Value);
-            fixture.Confirm.Execute(null);
+            UserError error = null;
+            using(UserError.OverrideHandlersForTesting(x => { error = x; return Observable.Return(RecoveryOptionResult.CancelOperation); })) {
+                fixture.Confirm.Execute(null);
+            }
 
-            this.Log().Info("Error Message: {0}", result);
-            result.Should().NotBeNullOrEmpty();
+            error.Should().NotBeNull();
+            this.Log().Info("Error Message: {0}", error.ErrorMessage);
+            error.ErrorMessage.Should().NotBeNullOrEmpty();
         }
 
         [Fact]

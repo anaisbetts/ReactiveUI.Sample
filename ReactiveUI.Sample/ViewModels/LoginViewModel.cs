@@ -19,7 +19,6 @@ namespace ReactiveUI.Sample.ViewModels
         string User { get; set; }
         string Password { get; set; }
         ReactiveAsyncCommand Confirm { get; }
-        string ErrorMessage { get; }
     }
 
     public class LoginViewModel : ReactiveObject, ILoginViewModel
@@ -36,11 +35,6 @@ namespace ReactiveUI.Sample.ViewModels
         {
             get { return _Password; }
             set { this.RaiseAndSetIfChanged(x => x.Password, value); }
-        }
-
-        ObservableAsPropertyHelper<string> _ErrorMessage;
-        public string ErrorMessage {
-            get { return _ErrorMessage.Value; }
         }
 
         public string UrlPathSegment
@@ -67,9 +61,8 @@ namespace ReactiveUI.Sample.ViewModels
 
             MessageBus.Current.RegisterMessageSource(result.Select(res => new Tuple<string, string>(User, Password)), "login");
 
-            Confirm.ThrownExceptions
-                .Select(x => x.Message)
-                .ToProperty(this, x => x.ErrorMessage);
+            Confirm.ThrownExceptions.Subscribe(x => 
+                UserError.Throw(new UserError("Couldn't Log In", x.Message, new[] {RecoveryCommand.Ok}, null, x)));
         }
 
         public IObservable<Unit> TestUserNameAndPassword()

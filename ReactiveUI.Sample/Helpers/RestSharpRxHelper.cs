@@ -11,7 +11,7 @@ namespace ReactiveUI.Sample.Helpers
 {
     public static class RestSharpRxHelper
     {
-        public static IObservable<RestResponse<T>> RequestAsync<T>(this RestClient client, IRestRequest request) where T : new()
+        public static IObservable<RestResponse<T>> RequestAsync<T>(this IRestClient client, IRestRequest request) where T : new()
         {
             var ret = new AsyncSubject<RestResponse<T>>();
 
