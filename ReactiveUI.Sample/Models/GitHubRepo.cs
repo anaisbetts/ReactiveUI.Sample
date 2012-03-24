@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ReactiveUI.Sample.Models
 {
-    public class GitHubRepoInfo
+    public class GitHubOrgInfo
     {
         public string login { get; set; }
         public int id { get; set; }
