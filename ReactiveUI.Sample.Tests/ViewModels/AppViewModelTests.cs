@@ -38,7 +38,7 @@ namespace ReactiveUI.Sample.ViewModels.Tests
 
             // Make sure we're now showing the repo page
             this.Log().Info("Current Route: {0}", fixture.Router.GetUrlForCurrentRoute());
-            (fixture.Router.CurrentViewModel.First() is IRepoViewModel).Should().BeTrue();
+            (fixture.Router.CurrentViewModel.First() is IRepoSelectionViewModel).Should().BeTrue();
         }
     }
 }

@@ -37,7 +37,7 @@ namespace ReactiveUI.Sample.ViewModels
                 User = login.Item1;
                 Password = login.Item2;
 
-                Router.NavigateAndReset.Execute(Kernel.Get<IRepoViewModel>());
+                Router.NavigateAndReset.Execute(Kernel.Get<IRepoSelectionViewModel>());
             });
 
             Router.Navigate.Execute(Kernel.Get<ILoginViewModel>());
@@ -54,7 +54,7 @@ namespace ReactiveUI.Sample.ViewModels
             ServiceLocator.SetLocatorProvider(() => new NInjectServiceLocator());
 
             Kernel.Bind<ILoginViewModel>().To<LoginViewModel>();
-            Kernel.Bind<IRepoViewModel>().To<RepoViewModel>();
+            Kernel.Bind<IRepoSelectionViewModel>().To<RepoSelectionViewModel>();
         }
 
         public static IKernel Kernel { get; set; }
