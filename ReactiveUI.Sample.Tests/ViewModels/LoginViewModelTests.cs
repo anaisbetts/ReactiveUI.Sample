@@ -91,5 +91,23 @@ namespace ReactiveUI.Sample.ViewModels.Tests
             this.Log().Info("Error Message: {0}", result);
             result.Should().NotBeNullOrEmpty();
         }
+
+        [Fact]
+        public void LoginFailureIntegrationTest()
+        {
+            var mock = new MoqMockingKernel();
+
+            mock.Bind<ILoginViewModel>().To(typeof(LoginViewModel));
+
+            var fixture = mock.Get<ILoginViewModel>() as LoginViewModel;
+            fixture.User = "herpderp";
+            fixture.Password = "woefawoeifjwoefijwe";
+
+            fixture.TestUserNameAndPassword().Select(_ => false)
+                .Catch(Observable.Return(true))
+                .Timeout(TimeSpan.FromSeconds(10), RxApp.TaskpoolScheduler)
+                .First()
+                .Should().BeTrue();
+        }
     }
 }

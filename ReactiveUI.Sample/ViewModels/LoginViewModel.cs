@@ -72,7 +72,7 @@ namespace ReactiveUI.Sample.ViewModels
                 .ToProperty(this, x => x.ErrorMessage);
         }
 
-        IObservable<Unit> TestUserNameAndPassword()
+        public IObservable<Unit> TestUserNameAndPassword()
         {
             var client = new RestClient("https://api.github.com");
             client.Authenticator = new HttpBasicAuthenticator(User, Password);
