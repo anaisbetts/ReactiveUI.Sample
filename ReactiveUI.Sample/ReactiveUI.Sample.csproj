@@ -120,6 +120,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Helpers\RestSharpRxHelper.cs" />
+    <Compile Include="Models\GitHubApi.cs" />
     <Compile Include="Models\GitHubRepo.cs" />
     <Compile Include="Models\GitHubUser.cs" />
     <Compile Include="ViewModels\AppViewModel.cs" />

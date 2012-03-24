@@ -5,10 +5,16 @@ using System.Text;
 using Microsoft.Practices.ServiceLocation;
 using Ninject;
 using ReactiveUI.Routing;
+using RestSharp;
 
 namespace ReactiveUI.Sample.ViewModels
 {
-    public class AppViewModel : ReactiveObject, IScreen
+    public interface IAppViewModel : IReactiveNotifyPropertyChanged
+    {
+        IRestClient CreateClient();
+    }
+
+    public class AppViewModel : ReactiveObject, IAppViewModel, IScreen
     {
         string _User;
         public string User
@@ -32,6 +38,7 @@ namespace ReactiveUI.Sample.ViewModels
 
             Kernel = testKernel ?? Kernel;
             Kernel.Bind<IScreen>().ToConstant(this);
+            Kernel.Bind<IAppViewModel>().ToConstant(this);
 
             MessageBus.Current.Listen<Tuple<string, string>>("login").Subscribe(login => {
                 User = login.Item1;
@@ -41,6 +48,13 @@ namespace ReactiveUI.Sample.ViewModels
             });
 
             Router.Navigate.Execute(Kernel.Get<ILoginViewModel>());
+        }
+
+        public IRestClient CreateClient()
+        {
+            return new RestClient("https://api.github.com") {
+                Authenticator = new HttpBasicAuthenticator(User, Password)
+            };
         }
 
 
