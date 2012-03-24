@@ -1,10 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Text;
 using FluentAssertions;
 using Microsoft.Reactive.Testing;
+using Moq;
+using Ninject;
+using Ninject.MockingKernel;
+using Ninject.MockingKernel.Moq;
+using ReactiveUI.Routing;
 using ReactiveUI.Testing;
 using Xunit;
 
@@ -15,17 +21,23 @@ namespace ReactiveUI.Sample.ViewModels.Tests
         [Fact]
         public void SuccessfulLoginShouldActuallyLogIn()
         {
-            var fixture = new LoginViewModel();
+            var mock = new MoqMockingKernel();
+            mock.Bind<ILoginViewModel>().To(typeof(LoginViewModel));
+
+            mock.Bind<Func<IObservable<Unit>>>()
+                .ToConstant<Func<IObservable<Unit>>>(() => Observable.Return(Unit.Default))
+                .Named("confirmUserPass");
+
+            var fixture = mock.Get<ILoginViewModel>();
 
             fixture.User = "xpaulbettsx";
-            fixture.Password = "62etmdtmwtmTM!";
+            fixture.Password = "theCorrectPassword";
 
             fixture.Confirm.CanExecute(null).Should().BeTrue();
-            fixture.Confirm.Execute(null);
 
-            var result = MessageBus.Current.Listen<Tuple<string, string>>("login")
-                .Timeout(TimeSpan.FromSeconds(10), RxApp.TaskpoolScheduler)
-                .First();
+            Tuple<string, string> result = null;
+            MessageBus.Current.Listen<Tuple<string, string>>("login").Subscribe(x => result = x);
+            fixture.Confirm.Execute(null);
 
             result.Should().NotBeNull();
             result.Item1.Should().Be(fixture.User);
@@ -35,7 +47,10 @@ namespace ReactiveUI.Sample.ViewModels.Tests
         [Fact]
         public void BlankFieldsMeansNoLogin()
         {
-            var fixture = new LoginViewModel();
+            var mock = new MoqMockingKernel();
+            mock.Bind<ILoginViewModel>().To(typeof(LoginViewModel));
+
+            var fixture = mock.Get<ILoginViewModel>();
 
             fixture.Confirm.CanExecute(null).Should().BeFalse();
 
@@ -54,20 +69,27 @@ namespace ReactiveUI.Sample.ViewModels.Tests
         [Fact]
         public void BadPasswordMeansErrorMessage()
         {
-            var fixture = new LoginViewModel();
+            var mock = new MoqMockingKernel();
+
+            mock.Bind<ILoginViewModel>().To(typeof(LoginViewModel));
+
+            mock.Bind<Func<IObservable<Unit>>>()
+                .ToConstant<Func<IObservable<Unit>>>(() => Observable.Throw<Unit>(new Exception("Bad Stuff")))
+                .Named("confirmUserPass");
+
+            var fixture = mock.Get<ILoginViewModel>();
 
             fixture.User = "herpderp";
             fixture.Password = "woefawoeifjwoefijwe";
 
             fixture.Confirm.CanExecute(null).Should().BeTrue();
+
+            string result = null;
+            fixture.ObservableForProperty(x => x.ErrorMessage).Subscribe(x => result = x.Value);
             fixture.Confirm.Execute(null);
 
-            var result = fixture.ObservableForProperty(x => x.ErrorMessage)
-                .Timeout(TimeSpan.FromSeconds(10), RxApp.TaskpoolScheduler)
-                .First();
-
-            this.Log().Info("Error Message: {0}", result.Value);
-            result.Value.Should().NotBeNullOrEmpty();
+            this.Log().Info("Error Message: {0}", result);
+            result.Should().NotBeNullOrEmpty();
         }
     }
 }

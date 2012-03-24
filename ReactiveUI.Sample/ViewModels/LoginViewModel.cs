@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Text;
+using Ninject;
 using ReactiveUI;
 using ReactiveUI.Routing;
 using ReactiveUI.Sample.Models;
@@ -50,27 +52,34 @@ namespace ReactiveUI.Sample.ViewModels
 
         public ReactiveAsyncCommand Confirm { get; protected set; }
 
-        public LoginViewModel(ReactiveAsyncCommand confirm = null)
+        [Inject]
+        public LoginViewModel(IScreen hostScreen, [Named("confirmUserPass")] [Optional] Func<IObservable<Unit>> confirmUserPassMock = null)
         {
+            HostScreen = hostScreen;
+
             var canConfirm = this.WhenAny(x => x.User, x => x.Password,
                 (u, p) => !String.IsNullOrWhiteSpace(u.Value) && !String.IsNullOrWhiteSpace(p.Value));
 
-            Confirm = confirm ?? new ReactiveAsyncCommand(canConfirm);
+            Confirm = new ReactiveAsyncCommand(canConfirm);
 
-            var result = Confirm.RegisterAsyncObservable(_ => {
-                var client = new RestClient("https://api.github.com");
-                client.Authenticator = new HttpBasicAuthenticator(User, Password);
+            var confirmFunc = confirmUserPassMock ?? TestUserNameAndPassword;
+            var result = Confirm.RegisterAsyncObservable(_ => confirmFunc());
 
-                return client.RequestAsync<GitHubUser>(new RestRequest("user"))
-                    .Do(res => this.Log().Info("User's URL: {0}", res.Data.url))
-                    .Select(res => new Tuple<string, string>(User, Password));
-            });
-
-            MessageBus.Current.RegisterMessageSource(result, "login");
+            MessageBus.Current.RegisterMessageSource(result.Select(res => new Tuple<string, string>(User, Password)), "login");
 
             Confirm.ThrownExceptions
                 .Select(x => x.Message)
                 .ToProperty(this, x => x.ErrorMessage);
+        }
+
+        IObservable<Unit> TestUserNameAndPassword()
+        {
+            var client = new RestClient("https://api.github.com");
+            client.Authenticator = new HttpBasicAuthenticator(User, Password);
+
+            return client.RequestAsync<GitHubUser>(new RestRequest("user"))
+                .Do(res => this.Log().Info("User's URL: {0}", res.Data.url))
+                .Select(_ => Unit.Default);
         }
     }
 }
