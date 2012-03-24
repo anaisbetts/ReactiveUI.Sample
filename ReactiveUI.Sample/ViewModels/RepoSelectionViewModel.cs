@@ -24,6 +24,7 @@ namespace ReactiveUI.Sample.ViewModels
 
         public OrganizationTileViewModel(GitHubOrgInfo model, IObservable<List<GitHubRepo>> repositories)
         {
+            Model = model;
             Repositories = new ReactiveCollection<RepoTileViewModel>();
 
             repositories
