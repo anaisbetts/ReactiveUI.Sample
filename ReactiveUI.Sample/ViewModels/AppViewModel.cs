@@ -31,7 +31,7 @@ namespace ReactiveUI.Sample.ViewModels
             Router = new RoutingState();
 
             Kernel = testKernel ?? Kernel;
-            Kernel.Bind<IScreen>().ToSelf();
+            Kernel.Bind<IScreen>().ToConstant(this);
 
             MessageBus.Current.Listen<Tuple<string, string>>("login").Subscribe(login => {
                 User = login.Item1;
