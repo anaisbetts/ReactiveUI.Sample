@@ -13,22 +13,7 @@ namespace ReactiveUI.Sample.Helpers
     {
         public static IObservable<RestResponse<T>> RequestAsync<T>(this IRestClient client, IRestRequest request) where T : new()
         {
-            var ret = new AsyncSubject<RestResponse<T>>();
-
-            client.ExecuteAsync<T>(request, resp => {
-                try {
-                    if (resp.ErrorException != null) {
-                        ret.OnError(resp.ErrorException);
-                        return;
-                    }
-
-                    ret.OnNext(resp);
-                    ret.OnCompleted();
-                } catch (Exception ex) {
-                    ret.OnError(ex);
-                }
-            });               
-
+            var ret = Observable.Start(() => client.Execute<T>(request), RxApp.TaskpoolScheduler);
             return ret.throwOnRestResponseFailure();
         }
 
