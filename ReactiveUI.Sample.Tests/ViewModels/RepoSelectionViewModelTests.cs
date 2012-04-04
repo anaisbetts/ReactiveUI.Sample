@@ -32,19 +32,17 @@ namespace ReactiveUI.Sample.Tests.ViewModels
 
             (new TestScheduler()).With(sched => {
                 var fixture = mock.Get<IRepoSelectionViewModel>();
-                ReactiveCollection<OrganizationTileViewModel> repos = null;
-                fixture.ObservableForProperty(x => x.Organizations).Subscribe(x => repos = x.Value);
 
                 sched.Start();
 
-                foreach(var v in repos) {
+                foreach(var v in fixture.Organizations) {
                     v.Model.Should().NotBeNull();
                     this.Log().Info(v.Model.login);
 
                     v.Repositories.Count.Should().BeGreaterThan(0);
                 }
 
-                repos.Count.Should().BeGreaterThan(0);
+                fixture.Organizations.Count.Should().BeGreaterThan(0);
             });
         }
     }

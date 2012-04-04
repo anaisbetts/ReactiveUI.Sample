@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Windows.Media;
 using Ninject;
 using ReactiveUI.Routing;
@@ -38,37 +40,48 @@ namespace ReactiveUI.Sample.ViewModels
     public interface IRepoSelectionViewModel : IRoutableViewModel
     {
         ReactiveCollection<OrganizationTileViewModel> Organizations { get; }
+        IObservable<Unit> FinishedLoading { get; }
     }
 
     public class RepoSelectionViewModel : ReactiveObject, IRepoSelectionViewModel
     {
-        ObservableAsPropertyHelper<ReactiveCollection<OrganizationTileViewModel>> _Organizations;
-        public ReactiveCollection<OrganizationTileViewModel> Organizations {
-            get { return _Organizations.Value;  }
-        }
-
         public string UrlPathSegment {
             get { return "repos"; }
         }
 
         public IScreen HostScreen { get; protected set; }
 
+        public IObservable<Unit> FinishedLoading { get; protected set; }
+
+        public ReactiveCollection<OrganizationTileViewModel> Organizations { get; protected set; }
+
         [Inject]
         public RepoSelectionViewModel(IScreen hostScreen, IGitHubApi api)
         {
             HostScreen = hostScreen;
 
-            var repos = api.GetReposForUser();
+            var orgs = api.GetOrganizationsForUser();
+            var userInfo = getUserAsOrgInfo(api);
 
-            api.GetOrganizationsForUser()
-                .Select(x => createOrgViewModels(x, repos))
-                .ToProperty(this, x => x.Organizations);
+            var repoTable = orgs.SelectMany(x => x.ToObservable())
+                .Select(x => new { Key = x, Value = api.GetReposFromOrganization(x) })
+                .Concat(userInfo.Select(x => new { Key = x, Value = api.GetReposForUser() }));
+
+            Organizations = repoTable.Select(x => new OrganizationTileViewModel(x.Key, x.Value)).CreateCollection();
+
+            FinishedLoading = repoTable.Aggregate(Unit.Default, (acc, x) => Unit.Default);
         }
 
         ReactiveCollection<OrganizationTileViewModel> createOrgViewModels(IEnumerable<GitHubOrgInfo> gitHubOrgInfos, IObservable<List<GitHubRepo>> repos)
         {
             return new ReactiveCollection<OrganizationTileViewModel>(
                 gitHubOrgInfos.Select(x => new OrganizationTileViewModel(x, repos)));
+        }
+
+        IObservable<GitHubOrgInfo> getUserAsOrgInfo(IGitHubApi api)
+        {
+            return api.GetCurrentUser()
+                .Select( x => new GitHubOrgInfo() {login = x.login, avatar_url = x.avatar_url, url = x.url});
         }
     }
 }
