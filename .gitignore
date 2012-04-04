@@ -164,3 +164,6 @@ pip-log.txt
 
 # Packages
 [Pp]ackages
+
+# dotCover
+*.dotCover
