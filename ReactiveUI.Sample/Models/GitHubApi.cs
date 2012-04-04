@@ -14,6 +14,7 @@ namespace ReactiveUI.Sample.Models
     {
         IObservable<List<GitHubOrgInfo>> GetOrganizationsForUser();
         IObservable<List<GitHubRepo>> GetReposForUser();
+        IObservable<List<GitHubRepo>> GetReposFromOrganization(GitHubOrgInfo org);
         IObservable<GitHubUser> GetCurrentUser();
     }
 
@@ -38,6 +39,12 @@ namespace ReactiveUI.Sample.Models
         public IObservable<List<GitHubRepo>> GetReposForUser()
         {
             var req = new RestRequest("user/repos");
+            return client.RequestAsync<List<GitHubRepo>>(req).Select(x => x.Data);
+        }
+
+        public IObservable<List<GitHubRepo>> GetReposFromOrganization(GitHubOrgInfo org)
+        {
+            var req = new RestRequest(String.Format("orgs/{0}/repos", org.login));
             return client.RequestAsync<List<GitHubRepo>>(req).Select(x => x.Data);
         }
 
