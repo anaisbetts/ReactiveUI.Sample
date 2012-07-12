@@ -8,6 +8,7 @@ using FluentAssertions;
 using Ninject.MockingKernel.Moq;
 using Xunit;
 using ReactiveUI.Sample.ViewModels;
+using ReactiveUI.Routing;
 
 namespace ReactiveUI.Sample.ViewModels.Tests
 {
@@ -28,7 +29,7 @@ namespace ReactiveUI.Sample.ViewModels.Tests
 
             // Our app starts on the Login page by default
             this.Log().Info("Current Route: {0}", fixture.Router.GetUrlForCurrentRoute());
-            var loginModel = fixture.Router.CurrentViewModel.First() as ILoginViewModel;
+            var loginModel = fixture.Router.GetCurrentViewModel() as ILoginViewModel;
             loginModel.Should().NotBeNull();
 
             // Put in a fake user/pass and hit the Ok button
@@ -38,7 +39,7 @@ namespace ReactiveUI.Sample.ViewModels.Tests
 
             // Make sure we're now showing the repo page
             this.Log().Info("Current Route: {0}", fixture.Router.GetUrlForCurrentRoute());
-            (fixture.Router.CurrentViewModel.First() is IRepoSelectionViewModel).Should().BeTrue();
+            (fixture.Router.GetCurrentViewModel() is IRepoSelectionViewModel).Should().BeTrue();
         }
     }
 }
