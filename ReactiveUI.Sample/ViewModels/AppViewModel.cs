@@ -30,7 +30,7 @@ namespace ReactiveUI.Sample.ViewModels
             set { this.RaiseAndSetIfChanged(x => x.Password, value); }
         }
 
-        public RoutingState Router { get; protected set; }
+        public IRoutingState Router { get; protected set; }
 
         public AppViewModel(IKernel testKernel)
         {
